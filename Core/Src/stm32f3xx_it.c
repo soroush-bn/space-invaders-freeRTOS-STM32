@@ -42,7 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+unsigned int normalizedVolume =   0 ;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -170,10 +170,15 @@ void ADC1_2_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC1_2_IRQn 0 */
 
-  /* USER CODE END ADC1_2_IRQn 0 */
+  /* USER CODE END ADC1_
+   * 2_IRQn 0 */
   HAL_ADC_IRQHandler(&hadc2);
   /* USER CODE BEGIN ADC1_2_IRQn 1 */
-
+  int x = HAL_ADC_GetValue(&hadc2);
+    normalizedVolume = (100 * x) / 4095;
+    if (normalizedVolume == 100){
+     normalizedVolume = normalizedVolume - 1;
+    }
   /* USER CODE END ADC1_2_IRQn 1 */
 }
 

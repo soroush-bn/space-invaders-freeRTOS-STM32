@@ -125,7 +125,15 @@ osTimerId_t timerEnemieslr;
 osTimerId_t timerRandomBullet;
 uint32_t timeDown;
 RTC_TimeTypeDef mytime;
-extern int normalizedVolume;
+int mobkey1 = 0;
+int mobkey2 = 0;
+int mobkey3 = 0;
+int sw = 0;
+int locChar = 0;
+char a[3] = { 'a', 'b', 'c' };
+char b[3] = { 'd', 'e', 'f' };
+char c[3] = { 'g', 'h', 'i' };
+extern unsigned int normalizedVolume;
 TIM_HandleTypeDef *pwm_timer = &htim2; // Point to PWM Timer configured in CubeMX
 uint32_t pwm_channel = TIM_CHANNEL_2;   // Select configured PWM channel number
 typedef struct {
@@ -153,78 +161,129 @@ byte white_bitmap[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 byte hp_bitmap[8] = { 0x00, 0x00, 0x0C, 0x1E, 0x0F, 0x1E, 0x0C, 0x00 };
 byte ship_first_display_bitmap[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x0E,
 		0x1F };
+byte boss4[8] = { 0x0A, 0x0A, 0x08, 0x0F, 0x18, 0x10, 0x00, 0x00 };
 
-const Tone super_mario_bros[] = { { 2637, 306 }, // E7 x2
-		{ 0, 153 }, // x3 <-- Silence
-		{ 2637, 153 }, // E7
-		{ 0, 153 }, // x3
-		{ 2093, 153 }, // C7
-		{ 2637, 153 }, // E7
-		{ 0, 153 }, // x3
-		{ 3136, 153 }, // G7
-		{ 0, 459 }, // x3
-		{ 1586, 153 }, // G6
-		{ 0, 459 }, // x3
+byte boss3[8] = { 0x00, 0x00, 0x10, 0x18, 0x0F, 0x08, 0x0A, 0x0A };
 
-		{ 2093, 153 }, // C7
-		{ 0, 306 }, // x2
-		{ 1586, 153 }, // G6
-		{ 0, 306 }, // x2
-		{ 1319, 153 }, // E6
-		{ 0, 306 }, // x2
-		{ 1760, 153 }, // A6
-		{ 0, 153 }, // x1
-		{ 1976, 153 }, // B6
-		{ 0, 153 }, // x1
-		{ 1865, 153 }, // AS6
-		{ 1760, 153 }, // A6
-		{ 0, 153 }, // x1
+byte boss1[8] = { 0x03, 0x0B, 0x02, 0x1F, 0x03, 0x01, 0x00, 0x00 };
 
-		{ 1586, 204 }, // G6
-		{ 2637, 204 }, // E7
-		{ 3136, 204 }, // G7
-		{ 3520, 153 }, // A7
-		{ 0, 153 }, // x1
-		{ 2794, 153 }, // F7
-		{ 3136, 153 }, // G7
-		{ 0, 153 }, // x1
-		{ 2637, 153 }, // E7
-		{ 0, 153 }, // x1
-		{ 2093, 153 }, // C7
-		{ 2349, 153 }, // D7
-		{ 1976, 153 }, // B6
-		{ 0, 306 }, // x2
+byte boss2[8] = { 0x00, 0x00, 0x01, 0x03, 0x1F, 0x02, 0x0B, 0x03 };
+volatile uint32_t current_tone_end;
+#define NOTE_B0  31
+#define NOTE_C1  33
+#define NOTE_CS1 35
+#define NOTE_D1  37
+#define NOTE_DS1 39
+#define NOTE_E1  41
+#define NOTE_F1  44
+#define NOTE_FS1 46
+#define NOTE_G1  49
+#define NOTE_GS1 52
+#define NOTE_A1  55
+#define NOTE_AS1 58
+#define NOTE_B1  62
+#define NOTE_C2  65
+#define NOTE_CS2 69
+#define NOTE_D2  73
+#define NOTE_DS2 78
+#define NOTE_E2  82
+#define NOTE_F2  87
+#define NOTE_FS2 93
+#define NOTE_G2  98
+#define NOTE_GS2 104
+#define NOTE_A2  110
+#define NOTE_AS2 117
+#define NOTE_B2  123
+#define NOTE_C3  131
+#define NOTE_CS3 139
+#define NOTE_D3  147
+#define NOTE_DS3 156
+#define NOTE_E3  165
+#define NOTE_F3  175
+#define NOTE_FS3 185
+#define NOTE_G3  196
+#define NOTE_GS3 208
+#define NOTE_A3  220
+#define NOTE_AS3 233
+#define NOTE_B3  247
+#define NOTE_C4  262
+#define NOTE_CS4 277
+#define NOTE_D4  294
+#define NOTE_DS4 311
+#define NOTE_E4  330
+#define NOTE_F4  349
+#define NOTE_FS4 370
+#define NOTE_G4  392
+#define NOTE_GS4 415
+#define NOTE_A4  440
+#define NOTE_AS4 466
+#define NOTE_B4  494
+#define NOTE_C5  523
+#define NOTE_CS5 554
+#define NOTE_D5  587
+#define NOTE_DS5 622
+#define NOTE_E5  659
+#define NOTE_F5  698
+#define NOTE_FS5 740
+#define NOTE_G5  784
+#define NOTE_GS5 831
+#define NOTE_A5  880
+#define NOTE_AS5 932
+#define NOTE_B5  988
+#define NOTE_C6  1047
+#define NOTE_CS6 1109
+#define NOTE_D6  1175
+#define NOTE_DS6 1245
+#define NOTE_E6  1319
+#define NOTE_F6  1397
+#define NOTE_FS6 1480
+#define NOTE_G6  1568
+#define NOTE_GS6 1661
+#define NOTE_A6  1760
+#define NOTE_AS6 1865
+#define NOTE_B6  1976
+#define NOTE_C7  2093
+#define NOTE_CS7 2217
+#define NOTE_D7  2349
+#define NOTE_DS7 2489
+#define NOTE_E7  2637
+#define NOTE_F7  2794
+#define NOTE_FS7 2960
+#define NOTE_G7  3136
+#define NOTE_GS7 3322
+#define NOTE_A7  3520
+#define NOTE_AS7 3729
+#define NOTE_B7  3951
+#define NOTE_C8  4186
+#define NOTE_CS8 4435
+#define NOTE_D8  4699
+#define NOTE_DS8 4978
+#define REST      0
+int game_of_throne[] = {
 
-		{ 2093, 153 }, // C7
-		{ 0, 306 }, // x2
-		{ 1586, 153 }, // G6
-		{ 0, 306 }, // x2
-		{ 1319, 153 }, // E6
-		{ 0, 306 }, // x2
-		{ 1760, 153 }, // A6
-		{ 0, 153 }, // x1
-		{ 1976, 153 }, // B6
-		{ 0, 153 }, // x1
-		{ 1865, 153 }, // AS6
-		{ 1760, 153 }, // A6
-		{ 0, 153 }, // x1
+NOTE_E5, 8, NOTE_E5, 8, REST, 8, NOTE_E5, 8, REST, 8, NOTE_C5, 8, NOTE_E5,
+		8, //1
+		NOTE_G5, 4, REST, 4, NOTE_G4, 8, REST, 4,
+		NOTE_C5, -4, NOTE_G4, 8, REST, 4, NOTE_E4,
+		-4, // 3
+		NOTE_A4, 4, NOTE_B4, 4, NOTE_AS4, 8, NOTE_A4, 4,
+		NOTE_G4, -8, NOTE_E5, -8, NOTE_G5, -8, NOTE_A5, 4, NOTE_F5, 8, NOTE_G5,
+		8,
+		REST, 8, NOTE_E5, 4, NOTE_C5, 8, NOTE_D5, 8, NOTE_B4, -4,
+		NOTE_C5, -4, NOTE_G4, 8, REST, 4, NOTE_E4,
+		-4, // repeats from 3
+		NOTE_A4, 4, NOTE_B4, 4, NOTE_AS4, 8, NOTE_A4, 4,
+		NOTE_G4, -8, NOTE_E5, -8, NOTE_G5, -8, NOTE_A5, 4, NOTE_F5, 8, NOTE_G5,
+		8,
+		REST, 8, NOTE_E5, 4, NOTE_C5, 8, NOTE_D5, 8, NOTE_B4, -4, };
 
-		{ 1586, 204 }, // G6
-		{ 2637, 204 }, // E7
-		{ 3136, 204 }, // G7
-		{ 3520, 153 }, // A7
-		{ 0, 153 }, // x1
-		{ 2794, 153 }, // F7
-		{ 3136, 153 }, // G7
-		{ 0, 153 }, // x1
-		{ 2637, 153 }, // E7
-		{ 0, 153 }, // x1
-		{ 2093, 153 }, // C7
-		{ 2349, 153 }, // D7
-		{ 1976, 153 }, // B6
+int fire_note[] = {
+NOTE_G4, 8, NOTE_G5, 4, NOTE_G6, 8, NOTE_G4, -4, NOTE_G5, 8, NOTE_G6, -4 };
+int killed_note[] = {
 
-		{ 0, 0 }	// <-- Disable PWM
-};
+NOTE_B5, 8, NOTE_E6, 4, RESET, 8,
+NOTE_B5, 4, NOTE_E6, -4, RESET, 8 };
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -273,6 +332,10 @@ enum shootType {
 enum difficulty {
 	easy = 0, normal = 1, hard = 2
 };
+enum buzzerState {
+	first, shoot, killed
+};
+enum buzzerState buzzState = first;
 enum gameState {
 	inMenu = 0,
 	inAbout = 1,
@@ -311,8 +374,41 @@ void decreaseEnemyHp(struct enemy *e, int i) {
 	if (e[i].hp > 1) {
 		e[i].hp--;
 
-	} else
+	} else {
 		e[i].isAlive = 0;
+		buzzState = killed;
+//		byte boom2[8] = { 0x00, 0x00, 0x1F, 0x11, 0x15, 0x11, 0x1F, 0x00 };
+//		byte boom1[8] = { 0x00, 0x00, 0x00, 0x0E, 0x0E, 0x0E, 0x00, 0x00 };
+//		byte boom3[8] = { 0x00, 0x00, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x00 };
+////		createCharSem(3, white_bitmap);
+//		createCharSem(10, boom1);
+//		createCharSem(11, boom2);
+//		createCharSem(12, boom3);
+//
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(3);
+//		osDelay(30);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(9);
+//		osDelay(20);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(10);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(9);
+//		osDelay(20);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(11);
+//		osDelay(20);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(9);
+//		osDelay(20);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(12);
+//		osDelay(20);
+//		setCursorSem(e[i].x80, e[i].y80);
+//		writeSem(9);
+//		osDelay(20);
+	}
 }
 void EnemiesMoveRight(struct enemy *e) {
 	for (int var = 0; var < y80_max; ++var) {
@@ -350,13 +446,13 @@ void enemyShootRandom() {
 
 int addScore(enum enemyType t) {
 	switch (t) {
-	case 1:
+	case normalEnemy:
 		return 10;
 		break;
-	case 2:
+	case advanceEnemy:
 		return 50;
 		break;
-	case 3:
+	case boss:
 		return 100;
 		break;
 	default:
@@ -383,6 +479,7 @@ void decreasePlyaerHP(struct player *p) {
 		p->hp--;
 		showHP();
 	} else {
+		buzzState = killed;
 		p->isAlive = 0;
 	}
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, 0);
@@ -478,6 +575,7 @@ int checkbulletsCollision(struct bullet *be, struct bullet *bp) {
 int checkbulletPCollision(struct enemy *e, struct bullet *b) {
 	for (int i = 0; i < 3; i++) {
 		if (e[i].x80 == b->x80 && e[i].y80 == b->y80) {
+
 			decreaseEnemyHp(e, i);
 			b->isAlive = 0;
 			score += addScore(e[i].type);
@@ -637,7 +735,7 @@ void showLanding() {
 	createCharSem(2, ship_first_display_bitmap);
 
 	setCursorSem(3, 0);
-	printSem("Space Invaders!");
+	printSem("space invaders !");
 
 	setCursorSem(1, 1);
 	writeSem(0);
@@ -671,18 +769,23 @@ void showMenu() {
 }
 
 void showGetName() {
-	unsigned char data[10] = "             dashagh";
+
+	unsigned char data[10] = "";
 //	HAL_UART_Receive_IT(&huart2, data, sizeof(data));
 	HAL_UART_Transmit(&huart2, data, sizeof(data), 100);
 //	mygame.player.name = data;
 	strcpy(mygame.player.name, data);
 	clearSem();
+	setCursorSem(2, 0);
+	printSem("enter your name : ");
 	setCursorSem(3, 1);
 	printSem(data);
 
 }
 
 void startGame() {
+//	osThreadSuspend(BuzzerHandle);
+	PWM_Change_Tone(4000, 0);
 	initGame(mygame.diff, mygame.player, mygame.killsToWin, mygame.state,
 			mygame.enemies);
 	clearSem();
@@ -691,7 +794,7 @@ void startGame() {
 	showHP();
 	osTimerStart(timerEnemies, timeDown);
 	osTimerStart(timerEnemieslr, 4000U);
-	osTimerStart(timerRandomBullet, 3000U);
+//	osTimerStart(timerRandomBullet, 3000U);
 }
 
 void stopGame() {
@@ -724,9 +827,11 @@ void showWin() {
 	setCursorSem(3, 2);
 	printSem(mygame.player.name);
 	setCursorSem(3, 1);
+	char msg[10];
+	sprintf(msg, "%02d", &score);
 	printSem("score: ");
 	setCursorSem(3, 0);
-	printSem(score);
+	printSem(msg);
 
 }
 int checkLoose() {
@@ -825,7 +930,8 @@ void PWM_Change_Tone(uint16_t pwm_freq, uint16_t volume) // pwm_freq (1 - 20000)
 		const uint16_t prescaler = 1 + internal_clock_freq / pwm_freq / 60000;
 		const uint32_t timer_clock = internal_clock_freq / prescaler;
 		const uint32_t period_cycles = timer_clock / pwm_freq;
-		const uint32_t pulse_width = volume * period_cycles / 1000 / 2;
+		const uint32_t pulse_width = normalizedVolume * period_cycles / 1000
+				/ 2;
 
 		pwm_timer->Instance->PSC = prescaler - 1;
 		pwm_timer->Instance->ARR = period_cycles - 1;
@@ -839,12 +945,34 @@ void Change_Melody(const Tone *melody, uint16_t tone_count) {
 	melody_tone_count = tone_count;
 	current_tone_number = 0;
 }
+void setup_melody(int melody[], int size_arr) {
+	int tempo = 180;
+	int notes = size_arr / sizeof(melody[0]) / 2;
+	int wholenote = (60000 * 4) / tempo;
+	int divider = 0, noteDuration = 0;
 
+	PWM_Start();
+	for (int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2) {
+		divider = melody[thisNote + 1];
+		if (divider > 0) {
+			noteDuration = (wholenote) / divider;
+		} else if (divider < 0) {
+			noteDuration = (wholenote) / abs(divider);
+			noteDuration *= 1.5;
+		}
+
+		PWM_Change_Tone(melody[thisNote], normalizedVolume);
+
+		osDelay(noteDuration);
+
+		PWM_Change_Tone(melody[thisNote], 0);
+	}
+}
 void Update_Melody() {
 	if ((HAL_GetTick() > current_tone_end)
 			&& (current_tone_number < melody_tone_count)) {
 		const Tone active_tone = *(melody_ptr + current_tone_number);
-		PWM_Change_Tone(active_tone.frequency, volume);
+		PWM_Change_Tone(active_tone.frequency, normalizedVolume);
 		current_tone_end = HAL_GetTick() + active_tone.duration;
 		current_tone_number++;
 	}
@@ -868,9 +996,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10)) {
 
 					// 1 move left
+					if (mygame.state == inPlaying) {
 
-					xEventGroupSetBitsFromISR(xEventGroup, FlagPlayerMoveLeft,
-							pdFALSE);
+						xEventGroupSetBitsFromISR(xEventGroup,
+								FlagPlayerMoveLeft, pdFALSE);
+					}
 
 				}
 			}
@@ -898,8 +1028,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			if (i == 3) {
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
 				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10)) {
+
 					mygame.state = inMenu;
-//					BaseType_t x = pdFALSE;
 					xEventGroupSetBitsFromISR(xEventGroup, FlaginMenu, pdFALSE);
 				}
 			}
@@ -936,8 +1066,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11)) {
 //5
+
 					mygame.state = inAbout;
-//					xEventGroupClearBits(xEventGroup, uxBitsToClear)
 					xEventGroupSetBitsFromISR(xEventGroup, FlaginAbout,
 							pdFALSE);
 
@@ -1051,6 +1181,88 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12))
 			;
 	}
+	if (GPIO_Pin == GPIO_PIN_13) {
+
+		int j = 0;
+		for (int i = 0; i < 4; i++) {
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+
+			if (i == 0) {
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)) {
+					// A
+					if (mobkey1 < 2)
+						mobkey1++;
+					else
+						mobkey1 = 0;
+					sw = 1;
+				}
+			}
+			if (i == 1) {
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)) {
+					//B ez
+					if (mobkey2 < 2)
+						mobkey2++;
+					else
+						mobkey2 = 0;
+					sw = 2;
+				}
+			}
+			if (i == 2) {
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)) {
+					//C  normal
+					if (mobkey3 < 2)
+						mobkey3++;
+					else
+						mobkey3 = 0;
+					sw = 3;
+				}
+			}
+			if (i == 3) {
+
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+				if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)) {
+					//# D
+					setCursor(4 + locChar, 2);
+					char msg[10];
+					locChar++;
+					switch (sw) {
+					case 1:
+						sprintf(msg, "%c", a[mobkey1]);
+						print(msg);
+						strcat(mygame.player.name, msg);
+						break;
+					case 2:
+						sprintf(msg, "%c", b[mobkey2]);
+						print(msg);
+						strcat(mygame.player.name, msg);
+						break;
+					case 3:
+						sprintf(msg, "%c", c[mobkey3]);
+						print(msg);
+						strcat(mygame.player.name, msg);
+						break;
+					default:
+						break;
+					}
+				}
+			}
+			osDelay(10);
+
+		}
+
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+		while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13))
+			;
+	}
 }
 
 /* USER CODE END 0 */
@@ -1093,8 +1305,6 @@ int main(void) {
 
 	HAL_ADC_Start_IT(&hadc2);
 	//HAL_TIM_Base_Start_IT(&htim2);
-	PWM_Start();
-	Change_Melody(super_mario_bros, ARRAY_LENGTH(super_mario_bros));
 
 	HAL_UART_Receive_IT(&huart2, data, sizeof(data));
 
@@ -1207,6 +1417,9 @@ int main(void) {
 
 	/* USER CODE BEGIN RTOS_EVENTS */
 	/* add events, ... */
+
+	PWM_Start();
+//	Change_Melody(super_mario_bros, ARRAY_LENGTH(super_mario_bros));
 	/* USER CODE END RTOS_EVENTS */
 
 	/* Start scheduler */
@@ -1457,7 +1670,7 @@ static void MX_TIM2_Init(void) {
 
 	/* USER CODE END TIM2_Init 1 */
 	htim2.Instance = TIM2;
-	htim2.Init.Prescaler = 191;
+	htim2.Init.Prescaler = 144;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim2.Init.Period = 9999;
 	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -1728,13 +1941,14 @@ void StartTaskPlayer(void *argument) {
 			printPlayer(mygame.player);
 		} else if ((xEventGroupValue & FlagPlayerShoot) != 0
 				&& mygame.player.isAlive) {
+			buzzState = shoot;
 			playerBullet.x80 = mygame.player.x80 + 1;
 			playerBullet.y80 = mygame.player.y80;
 			playerBullet.isAlive = 1;
 			osThreadResume(BulletPTaskHandle);
 		}
 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, 0);
-		osDelay(100);
+//		osDelay(100);
 	}
 	/* USER CODE END StartTaskPlayer */
 }
@@ -1775,7 +1989,7 @@ void StartTaskEnemy(void *argument) {
 			osThreadResume(BulletETaskHandle);
 		}
 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, 0);
-		osDelay(200);
+//		osDelay(200);
 	}
 	/* USER CODE END StartTaskEnemy */
 }
@@ -1801,7 +2015,8 @@ void StartTaskBulletP(void *argument) {
 
 		if (checkbulletPCollision(&mygame.enemies,
 				&playerBullet) || checkbulletsCollision(&enemiesBullet, &playerBullet) ||playerBullet.x80 == x80_max) {
-			clearBullet(&playerBullet);
+//			clearBullet(&playerBullet);
+
 			playerBullet.isAlive = 0;
 			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, 0);
 			if (checkWin()) {
@@ -1883,9 +2098,25 @@ void StartTaskAbout(void *argument) {
 void StartTaskBuzzer(void *argument) {
 	/* USER CODE BEGIN StartTaskBuzzer */
 	/* Infinite loop */
-	osThreadSuspend(BuzzerHandle);
+
 	for (;;) {
-		osDelay(1);
+//		PWM_Start();
+//		Change_Melody(super_mario_bros, ARRAY_LENGTH(super_mario_bros));
+		switch (buzzState) {
+		case first:
+			setup_melody(game_of_throne, sizeof(game_of_throne));
+			break;
+		case shoot:
+			setup_melody(fire_note, sizeof(fire_note));
+			break;
+		case killed:
+			setup_melody(killed_note, sizeof(killed_note));
+			break;
+		default:
+			break;
+		}
+
+		osDelay(1000);
 	}
 	/* USER CODE END StartTaskBuzzer */
 }
