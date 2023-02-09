@@ -97,7 +97,7 @@ osEventFlagsId_t myEvent01Handle;
 const osEventFlagsAttr_t myEvent01_attributes = { .name = "myEvent01" };
 /* USER CODE BEGIN PV */
 #define y80_max 3
-#define x80_max 19
+#define x80_max 16
 #define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define FlaginLanding (1U << 0U)
 #define FlaginMenu (1U << 1U)
@@ -108,7 +108,7 @@ const osEventFlagsAttr_t myEvent01_attributes = { .name = "myEvent01" };
 #define FlagPlayerShoot (1U << 6U)
 #define FlagEnemiesMoveDown (1U << 7U)
 #define FlagEnemiesMovelr (1U << 8U)
-#define FlagPlayerShoot (1U << 9U)
+//#define FlagPlayerShoot (1U << 9U)
 #define FlagEnemiesShoot (1U << 10U)
 #define FlaginGetName (1U << 11U)
 #define FlaginGetDifficulty (1U << 12U)
@@ -120,11 +120,13 @@ const osMutexAttr_t Thread_Mutex_attr = { "myThreadMutex", // human readable mut
 		0U                   // size for control block
 		};
 EventGroupHandle_t xEventGroup;
+osTimerId_t timerPlayer;
 osTimerId_t timerEnemies;
 osTimerId_t timerEnemieslr;
 osTimerId_t timerRandomBullet;
 uint32_t timeDown;
 RTC_TimeTypeDef mytime;
+int x80_last = 16;
 int mobkey1 = 0;
 int mobkey2 = 0;
 int mobkey3 = 0;
@@ -152,7 +154,7 @@ struct bullet playerBullet;
 struct bullet enemiesBullet;
 int score = 0;
 byte enemy_bitmap[8] = { 0x00, 0x00, 0x04, 0x0E, 0x1B, 0x0E, 0x04, 0x00 };
-
+byte enemy2_bitmap = { 0x01, 0x19, 0x0D, 0x07, 0x03, 0x07, 0x0D, 0x19 };
 byte player_bitmap[8] = { 0x00, 0x10, 0x18, 0x1C, 0x18, 0x10, 0x00, 0x00 };
 
 byte bulletp_bitmap[8] = { 0x00, 0x00, 0x00, 0x02, 0x0F, 0x02, 0x00, 0x00 };
@@ -373,7 +375,7 @@ void createEnemies() {
 void decreaseEnemyHp(struct enemy *e, int i) {
 	if (e[i].hp > 1) {
 		e[i].hp--;
-
+		sentMSG3();
 	} else {
 		e[i].isAlive = 0;
 		buzzState = killed;
@@ -437,6 +439,7 @@ void enemiesMovelr(struct enemy *e) {
 void enemiesMoveDown(struct enemy *e) {
 	for (int var = 0; var < y80_max; ++var) {
 		e[var].x80--;
+		x80_last = e[var].x80;
 	}
 }
 
@@ -478,12 +481,16 @@ void decreasePlyaerHP(struct player *p) {
 	if (p->hp > 1) {
 		p->hp--;
 		showHP();
+		if (p->hp < 2) {
+			sentMSG2();
+		}
 	} else {
 		buzzState = killed;
 		p->isAlive = 0;
 	}
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, 0);
 }
+
 void printPlayer(struct player p) {
 	if (p.isAlive) {
 		createCharSem(1, player_bitmap);
@@ -563,6 +570,19 @@ void moveBulletE(struct bullet *be) {
 	}
 }
 
+int checkEnemiesPlayerCollision(struct enemy *e, struct player *p) {
+	for (int i = 0; i < 3; i++) {
+		if (e[i].x80 == 0) {
+
+			decreasePlyaerHP(p);
+			e[i].isAlive = 0;
+
+			return 1;
+		}
+	}
+	return 0;
+
+}
 int checkbulletsCollision(struct bullet *be, struct bullet *bp) {
 	if (bp->x80 == be->x80 && bp->y80 == be->y80) {
 		bp->isAlive = 0;
@@ -619,7 +639,7 @@ void initGame(enum difficulty d, struct player p, int killsToWin,
 
 void writeSem(uint8_t value) {
 	osStatus_t val;
-	val = osMutexAcquire(mutexLCD, 10U); // wait for max. 10 ticks for semaphore token to get available
+	val = osMutexAcquire(mutexLCD, 30U); // wait for max. 10 ticks for semaphore token to get available
 	switch (val) {
 	case osOK:
 		write(value);
@@ -635,7 +655,7 @@ void writeSem(uint8_t value) {
 }
 void createCharSem(uint8_t location, uint8_t charmap[]) {
 	osStatus_t val;
-	val = osMutexAcquire(mutexLCD, 20U); // wait for max. 10 ticks for semaphore token to get available
+	val = osMutexAcquire(mutexLCD, 30U); // wait for max. 10 ticks for semaphore token to get available
 	switch (val) {
 	case osOK:
 		createChar(location, charmap);
@@ -652,7 +672,7 @@ void createCharSem(uint8_t location, uint8_t charmap[]) {
 }
 void printSem(const char str[]) {
 	osStatus_t val;
-	val = osMutexAcquire(mutexLCD, 20U); // wait for max. 10 ticks for semaphore token to get available
+	val = osMutexAcquire(mutexLCD, 30U); // wait for max. 10 ticks for semaphore token to get available
 	switch (val) {
 	case osOK:
 		print(str);
@@ -668,7 +688,7 @@ void printSem(const char str[]) {
 }
 void setCursorSem(uint8_t col, uint8_t row) {
 	osStatus_t val;
-	val = osMutexAcquire(mutexLCD, 20U); // wait for max. 10 ticks for semaphore token to get available
+	val = osMutexAcquire(mutexLCD, 30U); // wait for max. 10 ticks for semaphore token to get available
 	switch (val) {
 	case osOK:
 		setCursor(col, row);
@@ -704,8 +724,8 @@ void printEnemies(struct game *g) {
 	for (int j = 0; j < 3; ++j) {
 		if (g->enemies[j].isAlive) {
 			createCharSem(0, enemy_bitmap);
-			setCursorSem(g->enemies[j].x80, g->enemies[j].y80);
-			writeSem(0);
+			setCursor(g->enemies[j].x80, g->enemies[j].y80);
+			write(0);
 		}
 
 	}
@@ -713,8 +733,8 @@ void printEnemies(struct game *g) {
 void clearEnemies(struct game *g) {
 	for (int j = 0; j < 3; ++j) {
 		createCharSem(3, white_bitmap);
-		setCursorSem(g->enemies[j].x80, g->enemies[j].y80);
-		writeSem(3);
+		setCursor(g->enemies[j].x80, g->enemies[j].y80);
+		write(3);
 	}
 }
 void showHP() {
@@ -788,20 +808,25 @@ void startGame() {
 	PWM_Change_Tone(4000, 0);
 	initGame(mygame.diff, mygame.player, mygame.killsToWin, mygame.state,
 			mygame.enemies);
+//	uint8_t message[] = "a";
+//	sprintf(message,"name= %s killsToWin= %d , difficulty= %d",mygame.player.name,mygame.killsToWin,mygame.diff);
+//	HAL_UART_Transmit(&huart2, message, sizeof(message), 80);
 	clearSem();
 	printPlayer(mygame.player);
 	printEnemies(&mygame);
 	showHP();
+//	osTimerStart(timerPlayer, 1000U);
 	osTimerStart(timerEnemies, timeDown);
-	osTimerStart(timerEnemieslr, 4000U);
-//	osTimerStart(timerRandomBullet, 3000U);
+	osTimerStart(timerEnemieslr, 3000U);
+	osTimerStart(timerRandomBullet, 4000U);
 }
 
 void stopGame() {
+	osTimerStop(timerPlayer);
 	osTimerStop(timerEnemies);
 	osTimerStop(timerEnemieslr);
 	osTimerStop(timerRandomBullet);
-	osThreadSuspend(BulletPTaskHandle);
+//	osThreadSuspend(BulletPTaskHandle);
 
 }
 
@@ -828,7 +853,7 @@ void showWin() {
 	printSem(mygame.player.name);
 	setCursorSem(3, 1);
 	char msg[10];
-	sprintf(msg, "%02d", &score);
+	sprintf(msg, "%02d", score);
 	printSem("score: ");
 	setCursorSem(3, 0);
 	printSem(msg);
@@ -882,22 +907,44 @@ void sentMSG2() {
 //	osDelay(1000);
 }
 void sentMSG3() {
-	uint8_t close_win_message[] = "LETS GO \n 3 enemy remaining";
+	uint8_t close_win_message[] = "LETS GO \n 3 enemies remaining";
 	HAL_UART_Transmit(&huart2, close_win_message, sizeof(close_win_message),
 			80);
 //	osDelay(1000);
 }
 void sentMSG4() {
-	uint8_t win_message[] = "VICTORY! \n you are a hero ";
+	uint8_t win_message[] = "VICTORY! \n ";
 	HAL_UART_Transmit(&huart2, win_message, sizeof(win_message), 80);
 //	osDelay(1000);
 }
 void sentMSG5() {
-	uint8_t loose_message[] = "GAME OVER! \n never give up ";
+	uint8_t loose_message[] = "GAME OVER! \n ";
 	HAL_UART_Transmit(&huart2, loose_message, sizeof(loose_message), 80);
 //	osDelay(1000);
 }
 
+static void playerTimer_Callback(void *argument) {
+//	srand(time(NULL)); // seed the random number generator
+	int r = rand() % 4; // generate a random number between 0 and 3
+	switch (r) {
+	case 0:
+		xEventGroupSetBits(xEventGroup, FlagPlayerMoveLeft);
+		break;
+	case 1:
+		xEventGroupSetBits(xEventGroup, FlagPlayerMoveRight);
+		break;
+	case 2:
+		if (!playerBullet.isAlive) {
+			xEventGroupSetBits(xEventGroup, FlagPlayerShoot);
+		}
+
+		break;
+	default:
+		xEventGroupSetBits(xEventGroup, FlagPlayerMoveRight);
+		break;
+	}
+
+}
 static void enemiestimer_Callback(void *argument) {
 	xEventGroupSetBits(xEventGroup, FlagEnemiesMoveDown);
 }
@@ -1132,7 +1179,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 						mygame.diff = easy;
 						mygame.killsToWin = 3;
 						mygame.player.hp = 7;
-						timeDown = 10000U;
+						timeDown = 12000U;
 						xEventGroupSetBitsFromISR(xEventGroup, FlaginPlaying,
 								pdFALSE);
 					}
@@ -1148,7 +1195,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 						mygame.diff = normal;
 						mygame.killsToWin = 6;
 						mygame.player.hp = 5;
-						timeDown = 6000U;
+						timeDown = 8000U;
 						xEventGroupSetBitsFromISR(xEventGroup, FlaginPlaying,
 								pdFALSE);
 					}
@@ -1164,7 +1211,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 						mygame.state = inPlaying;
 						mygame.killsToWin = 9;
 						mygame.player.hp = 3;
-						timeDown = 2000U;
+						timeDown = 4000U;
 						xEventGroupSetBitsFromISR(xEventGroup, FlaginPlaying,
 								pdFALSE);
 					}
@@ -1307,6 +1354,8 @@ int main(void) {
 	//HAL_TIM_Base_Start_IT(&htim2);
 
 	HAL_UART_Receive_IT(&huart2, data, sizeof(data));
+	uint8_t message[] = "start logging ... \n";
+	HAL_UART_Transmit(&huart2, message, sizeof(message), 80);
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
@@ -1392,12 +1441,14 @@ int main(void) {
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	// creates a periodic timer:
+	timerPlayer = osTimerNew(playerTimer_Callback, osTimerPeriodic, (void*) 5,
+	NULL); // (void*)5 is passed as an argument
 	timerEnemies = osTimerNew(enemiestimer_Callback, osTimerPeriodic, (void*) 5,
 	NULL); // (void*)5 is passed as an argument
 	timerEnemieslr = osTimerNew(enemiestimerlr_Callback, osTimerPeriodic,
 			(void*) 5,
 			NULL); // (void*)5 is passed as an argument
-	timerEnemies = osTimerNew(randomBulletTimer_Callback, osTimerPeriodic,
+	timerRandomBullet = osTimerNew(randomBulletTimer_Callback, osTimerPeriodic,
 			(void*) 5, NULL); // (void*)5 is passed as an argument
 
 //	semaphoreLcd = osSemaphoreNew(1U, 1U, NULL);
@@ -1971,9 +2022,14 @@ void StartTaskEnemy(void *argument) {
 		pdTRUE, pdFALSE, portMAX_DELAY);
 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, 1);
 		if ((xEventGroupValue & FlagEnemiesMoveDown) != 0) {
+
 			clearEnemies(&mygame);
 			enemiesMoveDown(&mygame.enemies);
 			printEnemies(&mygame);
+			if (checkEnemiesPlayerCollision(&mygame.enemies, &mygame.player)) {
+				showLoose();
+				stopGame();
+			}
 
 		} else if ((xEventGroupValue & FlagEnemiesMovelr) != 0) {
 			clearEnemies(&mygame);
@@ -2013,15 +2069,18 @@ void StartTaskBulletP(void *argument) {
 		moveBulletP(&playerBullet);
 		printBulletP();
 
-		if (checkbulletPCollision(&mygame.enemies,
-				&playerBullet) || checkbulletsCollision(&enemiesBullet, &playerBullet) ||playerBullet.x80 == x80_max) {
+		if (checkbulletPCollision(&mygame.enemies, &playerBullet)
+				|| checkbulletsCollision(&enemiesBullet, &playerBullet)
+				|| playerBullet.x80 == x80_last) {
 //			clearBullet(&playerBullet);
 
 			playerBullet.isAlive = 0;
 			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, 0);
 			if (checkWin()) {
-				showWin();
+				sentMSG4();
 				stopGame();
+				showWin();
+
 //				osThreadTerminate(BulletETaskHandle);
 //				osThreadTerminate(BulletPTaskHandle);
 			}
@@ -2029,7 +2088,7 @@ void StartTaskBulletP(void *argument) {
 
 		}
 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, 0);
-		osDelay(30);
+		osDelay(40);
 	}
 	/* USER CODE END StartTaskBulletP */
 }
@@ -2057,15 +2116,14 @@ void StartTaskBulletE(void *argument) {
 			enemiesBullet.isAlive = 0;
 			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 0);
 			if (mygame.player.isAlive == 0) {
-				showLoose();
+				sentMSG5();
 				stopGame();
-//				osThreadTerminate(BulletETaskHandle);
-//				osThreadTerminate(BulletPTaskHandle);
+				showLoose();
 			}
 			osThreadSuspend(BulletETaskHandle);
 		}
 		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_14, 0);
-		osDelay(62);
+		osDelay(40);
 	}
 	/* USER CODE END StartTaskBulletE */
 }
